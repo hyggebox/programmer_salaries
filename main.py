@@ -22,10 +22,8 @@ def predict_salary(salary_from, salary_to):
 
 
 def predict_rub_salary_for_hh(salary):
-    if salary:
-        if salary["currency"] == "RUR":
-            return predict_salary(salary["from"], salary["to"])
-        return None
+    if salary and salary["currency"] == "RUR":
+        return predict_salary(salary["from"], salary["to"])
     return None
 
 
@@ -35,7 +33,7 @@ def predict_rub_salary_for_superjob(vacancy):
     return None
 
 
-def print_table(title, processed_vacancies):
+def make_table(title, processed_vacancies):
     table_content = [["Язык программирования", "Вакансий найдено", "Вакансий обработано", "Средняя зарплата"]]
     for lang, vacancies in processed_vacancies.items():
         table_content.append([
@@ -45,7 +43,7 @@ def print_table(title, processed_vacancies):
             vacancies["average_salary"]
         ])
     table = SingleTable(table_content, title)
-    print(table.table)
+    return table.table
 
 
 def handle_hh_vacancies(languages):
@@ -55,19 +53,18 @@ def handle_hh_vacancies(languages):
 
     for lang in languages:
         all_vacancies = []
+        moscow_id = 1
+        params = {
+            "text": search_template.format(lang),
+            "area": moscow_id
+        }
         for page in count(0):
-            params = {
-                "text": search_template.format(lang),
-                "area": 1,
-                "page": page
-            }
-
+            params["page"] = page
             page_response = requests.get(hh_endpoint, params)
             page_response.raise_for_status()
             page_vacancies = page_response.json()
 
-            all_page_vacancies = [vacancy for vacancy in page_vacancies["items"]]
-            all_vacancies += all_page_vacancies
+            all_vacancies += [vacancy for vacancy in page_vacancies["items"]]
 
             if page >= page_vacancies["pages"]-1:
                 break
@@ -77,7 +74,7 @@ def handle_hh_vacancies(languages):
                                       if (predicted_salary := predict_rub_salary_for_hh(salary)) is not None]
 
         average_salary_by_lang[lang] = {
-            "vacancies_found": len(all_salaries),
+            "vacancies_found": page_vacancies["found"],
             "vacancies_processed": len(processed_vacancies_salary),
             "average_salary": int(mean(processed_vacancies_salary))
         }
@@ -98,20 +95,20 @@ def handle_sj_vacancies(languages, token):
             params = {
                 "keyword": f"Программист {lang}",
                 "town": "Москва",
-                "page": page,
-                "count": 100
+                "page": page
             }
 
             response = requests.get(sj_endpoint, headers=headers, params=params)
             response.raise_for_status()
-            sj_vacancies_found = response.json()["total"]
-            sj_page_vacancies = response.json()["objects"]
+            sj_response = response.json()
+            sj_vacancies_found = sj_response["total"]
+            sj_page_vacancies = sj_response["objects"]
 
             for vacancy in sj_page_vacancies:
                 if predict_rub_salary_for_superjob(vacancy):
                     processed_vacancies_salaries.append(predict_rub_salary_for_superjob(vacancy))
 
-            if page >= sj_vacancies_found / 100:
+            if not sj_response["more"]:
                 break
 
         average_salary_by_lang[lang] = {
@@ -131,8 +128,8 @@ if __name__ == "__main__":
     hh_title = "HeadHunter, Москва"
     sj_title = "SuperJob, Москва"
 
-    print_table(hh_title, handle_hh_vacancies(languages))
-    print_table(sj_title, handle_sj_vacancies(languages, sj_token))
+    print(make_table(hh_title, handle_hh_vacancies(languages)))
+    print(make_table(sj_title, handle_sj_vacancies(languages, sj_token)))
 
 
 
