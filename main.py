@@ -85,12 +85,10 @@ def handle_hh_vacancies(languages):
     return average_salary_by_lang
 
 
-def handle_sj_vacancies(languages):
-    load_dotenv()
-
+def handle_sj_vacancies(languages, token):
     sj_endpoint = "https://api.superjob.ru/2.0/vacancies/"
     headers = {
-        "X-Api-App-Id": os.environ["SUPERJOB_KEY"]
+        "X-Api-App-Id": token
     }
     average_salary_by_lang = {}
 
@@ -127,12 +125,14 @@ def handle_sj_vacancies(languages):
 
 
 if __name__ == "__main__":
+    load_dotenv()
+    sj_token = os.environ["SUPERJOB_KEY"]
     languages = ["JavaScript", "Java", "Python", "Ruby", "PHP", "C", "C#", "C++", "Swift", "Go"]
     hh_title = "HeadHunter, Москва"
     sj_title = "SuperJob, Москва"
 
     print_table(hh_title, handle_hh_vacancies(languages))
-    print_table(sj_title, handle_sj_vacancies(languages))
+    print_table(sj_title, handle_sj_vacancies(languages, sj_token))
 
 
 
