@@ -89,7 +89,7 @@ def handle_sj_vacancies(languages, token):
     average_salary_by_lang = {}
 
     for lang in languages:
-        processed_vacancies_salaries = []
+        all_vacancies = []
         for page in count(0):
             params = {
                 "keyword": f"Программист {lang}",
@@ -101,14 +101,13 @@ def handle_sj_vacancies(languages, token):
             response.raise_for_status()
             sj_response = response.json()
             sj_page_vacancies = sj_response["objects"]
-
-            for vacancy in sj_page_vacancies:
-                if predict_rub_salary_for_superjob(vacancy):
-                    processed_vacancies_salaries.append(predict_rub_salary_for_superjob(vacancy))
+            all_vacancies += sj_page_vacancies
 
             if not sj_response["more"]:
                 break
 
+        processed_vacancies_salaries = [predicted_salary for vacancy in all_vacancies
+                                          if (predicted_salary := predict_rub_salary_for_superjob(vacancy))]
         average_salary = int(mean(processed_vacancies_salaries)) if processed_vacancies_salaries else 0
         average_salary_by_lang[lang] = {
             "vacancies_found": sj_response["total"],
