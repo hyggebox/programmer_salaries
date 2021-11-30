@@ -70,11 +70,12 @@ def handle_hh_vacancies(languages):
         all_salaries = [vacancy["salary"] for vacancy in all_vacancies]
         processed_vacancies_salary = [predicted_salary for salary in all_salaries
                                       if (predicted_salary := predict_rub_salary_for_hh(salary))]
+        average_salary = int(mean(processed_vacancies_salary)) if processed_vacancies_salary else 0
 
         average_salary_by_lang[lang] = {
             "vacancies_found": page_vacancies["found"],
             "vacancies_processed": len(processed_vacancies_salary),
-            "average_salary": int(mean(processed_vacancies_salary))
+            "average_salary": average_salary
         }
 
     return average_salary_by_lang
@@ -109,10 +110,11 @@ def handle_sj_vacancies(languages, token):
             if not sj_response["more"]:
                 break
 
+        average_salary = int(mean(processed_vacancies_salaries)) if processed_vacancies_salaries else 0
         average_salary_by_lang[lang] = {
             "vacancies_found": sj_vacancies_found,
             "vacancies_processed": len(processed_vacancies_salaries),
-            "average_salary": int(mean(processed_vacancies_salaries))
+            "average_salary": average_salary
         }
 
     return average_salary_by_lang
