@@ -9,16 +9,14 @@ from terminaltables import SingleTable
 
 
 def predict_salary(salary_from, salary_to):
-    if not salary_to:
-        average_salary = salary_from * 1.2
-    elif not salary_from:
-        average_salary = salary_to * 0.8
-    else:
-        average_salary = mean([salary_from, salary_to])
-
-    if average_salary == 0:
-        return None
-    return average_salary
+    if salary_from or salary_to:
+        if not salary_to:
+            average_salary = salary_from * 1.2
+        elif not salary_from:
+            average_salary = salary_to * 0.8
+        else:
+            average_salary = mean([salary_from, salary_to])
+        return average_salary
 
 
 def predict_rub_salary_for_hh(salary):
