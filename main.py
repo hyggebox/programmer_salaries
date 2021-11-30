@@ -100,7 +100,6 @@ def handle_sj_vacancies(languages, token):
             response = requests.get(sj_endpoint, headers=headers, params=params)
             response.raise_for_status()
             sj_response = response.json()
-            sj_vacancies_found = sj_response["total"]
             sj_page_vacancies = sj_response["objects"]
 
             for vacancy in sj_page_vacancies:
@@ -112,7 +111,7 @@ def handle_sj_vacancies(languages, token):
 
         average_salary = int(mean(processed_vacancies_salaries)) if processed_vacancies_salaries else 0
         average_salary_by_lang[lang] = {
-            "vacancies_found": sj_vacancies_found,
+            "vacancies_found": sj_response["total"],
             "vacancies_processed": len(processed_vacancies_salaries),
             "average_salary": average_salary
         }
