@@ -44,7 +44,6 @@ def make_table(title, processed_vacancies):
 
 
 def vacancies_for_lang_hh(language):
-    global hh_page_vacancies
     hh_endpoint = "https://api.hh.ru/vacancies"
     search_template = "NAME:программист {}"
     all_vacancies = []
@@ -64,20 +63,20 @@ def vacancies_for_lang_hh(language):
         if page >= hh_page_vacancies["pages"] - 1:
             break
 
-    return all_vacancies
+    return all_vacancies, hh_page_vacancies["found"]
 
 
 def handle_hh_vacancies(languages):
     average_salary_by_lang = {}
     for lang in languages:
-        all_vacancies = vacancies_for_lang_hh(lang)
+        all_vacancies, vacancies_found = vacancies_for_lang_hh(lang)
         all_salaries = [vacancy["salary"] for vacancy in all_vacancies]
         processed_vacancies_salary = [predicted_salary for salary in all_salaries
                                       if (predicted_salary := predict_rub_salary_for_hh(salary))]
         average_salary = int(mean(processed_vacancies_salary)) if processed_vacancies_salary else 0
 
         average_salary_by_lang[lang] = {
-            "vacancies_found": hh_page_vacancies["found"],
+            "vacancies_found": vacancies_found,
             "vacancies_processed": len(processed_vacancies_salary),
             "average_salary": average_salary
         }
@@ -86,7 +85,6 @@ def handle_hh_vacancies(languages):
 
 
 def vacancies_for_lang_sj(language, token):
-    global sj_response
     sj_endpoint = "https://api.superjob.ru/2.0/vacancies/"
     headers = {
         "X-Api-App-Id": token
@@ -107,18 +105,18 @@ def vacancies_for_lang_sj(language, token):
         if not sj_response["more"]:
             break
 
-    return all_vacancies
+    return all_vacancies, sj_response["total"]
 
 
 def handle_sj_vacancies(languages, token):
     average_salary_by_lang = {}
     for lang in languages:
-        all_vacancies = vacancies_for_lang_sj(lang, token)
+        all_vacancies, vacancies_found = vacancies_for_lang_sj(lang, token)
         processed_vacancies_salaries = [predicted_salary for vacancy in all_vacancies
                                         if (predicted_salary := predict_rub_salary_for_superjob(vacancy))]
         average_salary = int(mean(processed_vacancies_salaries)) if processed_vacancies_salaries else 0
         average_salary_by_lang[lang] = {
-            "vacancies_found": sj_response["total"],
+            "vacancies_found": vacancies_found,
             "vacancies_processed": len(processed_vacancies_salaries),
             "average_salary": average_salary
         }
